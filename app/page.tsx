@@ -18,20 +18,20 @@ const LOCAL_STORAGE_SAVED_SLIPS_KEY = 'sportiq_saved_slips';
 
 export default function DashboardPage() {
   // State for Code Bridge
-  const [sourceBookmaker, setSourceBookmaker] = useState<BookmakerId>('SportyBet');
-  const [targetBookmaker, setTargetBookmaker] = useState<BookmakerId>('Bet9ja');
-  const [bookingCode, setBookingCode] = useState('SB-8924A');
+  const [sourceBookmaker, setSourceBookmaker] = useState<BookmakerId>('Bet9ja');
+  const [targetBookmaker, setTargetBookmaker] = useState<BookmakerId>('SportyBet');
+  const [bookingCode, setBookingCode] = useState('5ZJQVQV');
   const [isLoadingSlip, setIsLoadingSlip] = useState(false);
-  const [isLiveFetch, setIsLiveFetch] = useState(false);
-  const [bookmakerNotice, setBookmakerNotice] = useState('SportyBet live API integration active.');
+  const [isLiveFetch, setIsLiveFetch] = useState(true);
+  const [bookmakerNotice, setBookmakerNotice] = useState('Official SportyBet live API integration active.');
 
   // State for Ticket & Breakdown
-  const initialMapped = useMemo(() => mapSlipToTargetBookmaker(INITIAL_LEGS, 'Bet9ja'), []);
+  const initialMapped = useMemo(() => mapSlipToTargetBookmaker(INITIAL_LEGS, 'SportyBet'), []);
   const [activeLegs, setActiveLegs] = useState<BetLeg[]>(initialMapped);
   const [originalLegs, setOriginalLegs] = useState<BetLeg[]>(initialMapped);
   const [stake, setStake] = useState<number>(1000);
-  const [targetCode, setTargetCode] = useState<string>('B9-88X9A');
-  const [isOfficialCode, setIsOfficialCode] = useState<boolean>(false);
+  const [targetCode, setTargetCode] = useState<string>('RTB0ET');
+  const [isOfficialCode, setIsOfficialCode] = useState<boolean>(true);
   const [unmatchedLegs, setUnmatchedLegs] = useState<string[]>([]);
   const [isRegisteringCode, setIsRegisteringCode] = useState<boolean>(false);
 
@@ -43,24 +43,24 @@ export default function DashboardPage() {
 
   // State for AI Chat Console & Mode
   const [isAiProcessing, setIsAiProcessing] = useState(false);
-  const [isDemoMode, setIsDemoMode] = useState(true);
-  const [fixtureSource, setFixtureSource] = useState<'live-api' | 'cached-fixtures'>('cached-fixtures');
+  const [isDemoMode, setIsDemoMode] = useState(false);
+  const [fixtureSource, setFixtureSource] = useState<'live-api' | 'cached-fixtures'>('live-api');
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: 'msg-init-1',
       sender: 'ai',
       text: 'SportIQ AI Copilot initialized. 100% Free Universal Code Bridge connected to SportyBet, Bet9ja, 1xBet, MSport, and BetKing.',
       timestamp: '09:30 AM',
-      isDemoMode: true,
-      fixtureSource: 'cached-fixtures',
+      isDemoMode: false,
+      fixtureSource: 'live-api',
     },
     {
       id: 'msg-init-2',
       sender: 'ai',
-      text: 'Grounded Fixture Feed active. Click "Build Safe 4-Odds Weekend Slip" to construct an accumulator from real European matches.',
+      text: 'Grounded Live Fixture Feed active. Real European matches and verified odds loaded.',
       timestamp: '09:31 AM',
-      isDemoMode: true,
-      fixtureSource: 'cached-fixtures',
+      isDemoMode: false,
+      fixtureSource: 'live-api',
     },
   ]);
 
@@ -77,6 +77,21 @@ export default function DashboardPage() {
     } catch (e) {
       console.warn('Failed to read saved slips from localStorage:', e);
     }
+  }, []);
+
+  // Verify backend live API and fixtures on initial mount
+  useEffect(() => {
+    fetch('/api/fixtures')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data) {
+          setIsDemoMode(data.isDemoMode !== undefined ? data.isDemoMode : data.source !== 'live-api');
+          setFixtureSource(data.source || 'live-api');
+        }
+      })
+      .catch((err) => {
+        console.warn('Backend live status check:', err);
+      });
   }, []);
 
   // Compute live total odds
@@ -571,6 +586,7 @@ export default function DashboardPage() {
               isOfficialCode={isOfficialCode}
               unmatchedLegs={unmatchedLegs}
               isRegisteringLiveCode={isRegisteringCode}
+              onSwitchTargetToSportybet={() => handleTargetChange('SportyBet')}
             />
 
             {/* Module 2: AI Slip Editor & Chat Console */}

@@ -40,93 +40,11 @@ function getFallbackLegsForCode(code: string, source: BookmakerId): { legs: BetL
     };
   }
 
-  // Synthesize realistic match set for any arbitrary custom code
-  const customLegs: BetLeg[] = [
-    {
-      id: `syn-1-${Date.now()}`,
-      league: 'Premier League',
-      kickoff: 'Today 20:00',
-      homeTeam: 'Arsenal',
-      awayTeam: 'Chelsea',
-      marketType: '1X2',
-      marketName: 'Match Result (1X2)',
-      selection: 'Arsenal (Home Win)',
-      odds: 1.88,
-      originalOdds: 1.88,
-      riskLevel: 'LOW',
-      riskReason: 'Arsenal has won 5 consecutive home derbies; Chelsea missing key central defenders.',
-      alternative: {
-        marketName: 'Double Chance (1X)',
-        selection: 'Arsenal or Draw (1X)',
-        odds: 1.25,
-        riskLevel: 'LOW',
-        reason: 'Reduces risk to near zero; covers draw scenario in high-intensity London derby.',
-      },
-    },
-    {
-      id: `syn-2-${Date.now()}`,
-      league: 'La Liga',
-      kickoff: 'Today 21:00',
-      homeTeam: 'Real Madrid',
-      awayTeam: 'Valencia',
-      marketType: 'OVER_UNDER',
-      marketName: 'Over / Under 2.5 Goals',
-      selection: 'Over 2.5 Goals',
-      odds: 1.62,
-      originalOdds: 1.62,
-      riskLevel: 'LOW',
-      riskReason: 'Last 7 H2H fixtures averaged 3.4 goals; Madrid averaging 2.6 xG at the Bernabéu.',
-      alternative: {
-        marketName: 'Over 1.5 Goals',
-        selection: 'Over 1.5 Goals',
-        odds: 1.18,
-        riskLevel: 'LOW',
-        reason: 'Ultra-conservative goal threshold with 94% historical hit-rate.',
-      },
-    },
-    {
-      id: `syn-3-${Date.now()}`,
-      league: 'Bundesliga',
-      kickoff: 'Tomorrow 15:30',
-      homeTeam: 'Bayer Leverkusen',
-      awayTeam: 'Borussia Dortmund',
-      marketType: '1X2',
-      marketName: 'Match Result (1X2)',
-      selection: 'Bayer Leverkusen (Home Win)',
-      odds: 2.15,
-      originalOdds: 2.15,
-      riskLevel: 'HIGH',
-      riskReason: 'Dortmund counter-press excels against high defensive lines; 3 key Leverkusen wingbacks flagged doubtful.',
-      alternative: {
-        marketName: 'Double Chance (1X)',
-        selection: 'Leverkusen or Draw (1X)',
-        odds: 1.34,
-        riskLevel: 'MEDIUM',
-        reason: 'Eliminates Dortmund outright win scenario while retaining solid accumulator value.',
-      },
-    },
-    {
-      id: `syn-4-${Date.now()}`,
-      league: 'Serie A',
-      kickoff: 'Tomorrow 18:00',
-      homeTeam: 'Inter Milan',
-      awayTeam: 'Napoli',
-      marketType: 'BTTS',
-      marketName: 'Both Teams To Score',
-      selection: 'BTTS - Yes',
-      odds: 1.75,
-      originalOdds: 1.75,
-      riskLevel: 'MEDIUM',
-      riskReason: 'Both sides rank in top 3 for offensive efficiency, but tactical cautiousness often limits open chances.',
-      alternative: {
-        marketName: 'Double Chance (1X)',
-        selection: 'Inter or Draw (1X)',
-        odds: 1.28,
-        riskLevel: 'LOW',
-        reason: 'Inter is unbeaten at San Siro in 14 league matches.',
-      },
-    },
-  ];
+  // Synthesize realistic match set for any arbitrary custom code using current real upcoming fixtures
+  const customLegs: BetLeg[] = INITIAL_LEGS.map((leg, index) => ({
+    ...leg,
+    id: `syn-${source.toLowerCase()}-${index + 1}-${Date.now()}`,
+  }));
 
   return { legs: customLegs, isPreset: false };
 }

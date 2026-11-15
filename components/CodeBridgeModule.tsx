@@ -126,7 +126,7 @@ export const CodeBridgeModule: React.FC<CodeBridgeModuleProps> = ({
             >
               {BOOKMAKERS.map((bm) => (
                 <option key={`src-${bm.id}`} value={bm.id} className="bg-slate-900 text-slate-200">
-                  {bm.name} ({bm.codePrefix}*) {bm.id === 'SportyBet' ? '⚡ Live API' : ''}
+                  {bm.name} {bm.id === 'SportyBet' ? '⚡ Live API' : ''}
                 </option>
               ))}
             </select>
@@ -165,7 +165,7 @@ export const CodeBridgeModule: React.FC<CodeBridgeModuleProps> = ({
             >
               {BOOKMAKERS.map((bm) => (
                 <option key={`tgt-${bm.id}`} value={bm.id} className="bg-slate-900 text-slate-200">
-                  {bm.name} ({bm.codePrefix}*)
+                  {bm.name} {bm.id === 'SportyBet' ? '⚡ (1-Click Verified Code)' : '(Manual Placement)'}
                 </option>
               ))}
             </select>
@@ -186,7 +186,7 @@ export const CodeBridgeModule: React.FC<CodeBridgeModuleProps> = ({
             value={bookingCode}
             onChange={handleInputChange}
             onKeyDown={handleKeyDown}
-            placeholder={`e.g. ${sourceBookmaker === 'SportyBet' ? 'SB-8924A' : sourceBookmaker === 'Bet9ja' ? 'B9-7719K' : '1X-9903Z'}`}
+            placeholder={`e.g. ${sourceBookmaker === 'SportyBet' ? 'RTB0ET' : sourceBookmaker === 'Bet9ja' ? '5ZJQVQV' : 'A3QW8'}`}
             className="w-full rounded-xl border border-slate-700/80 bg-slate-950/90 px-4 py-2.5 font-mono text-sm uppercase tracking-wider text-white placeholder-slate-500 shadow-inner focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/20"
           />
           {bookingCode && (

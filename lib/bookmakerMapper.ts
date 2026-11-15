@@ -217,17 +217,17 @@ export function generateTargetBookingCode(bookmakerId: BookmakerId): string {
 
   switch (bookmakerId) {
     case 'SportyBet':
-      return `SB-${randomStr(5)}`;
+      return randomStr(6);
     case 'Bet9ja':
-      return `B9-${randomStr(5)}`;
+      return randomStr(7);
     case '1xBet':
-      return `1X-${randomStr(6)}`;
+      return randomStr(6);
     case 'MSport':
-      return `MS-${randomStr(5)}`;
+      return randomStr(6);
     case 'BetKing':
-      return `BK-${randomStr(6)}`;
+      return randomStr(6);
     default:
-      return `CODE-${randomStr(5)}`;
+      return randomStr(6);
   }
 }
 

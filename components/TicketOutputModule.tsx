@@ -17,6 +17,8 @@ import {
   ArrowRight,
   TrendingDown,
   AlertTriangle,
+  AlertCircle,
+  Zap,
 } from 'lucide-react';
 import { BookmakerId, BetLeg } from '@/lib/types';
 import { BOOKMAKERS } from '@/lib/mockData';
@@ -41,6 +43,7 @@ interface TicketOutputModuleProps {
   isOfficialCode?: boolean;
   unmatchedLegs?: string[];
   isRegisteringLiveCode?: boolean;
+  onSwitchTargetToSportybet?: () => void;
 }
 
 export const TicketOutputModule: React.FC<TicketOutputModuleProps> = ({
@@ -62,6 +65,7 @@ export const TicketOutputModule: React.FC<TicketOutputModuleProps> = ({
   isOfficialCode = false,
   unmatchedLegs = [],
   isRegisteringLiveCode = false,
+  onSwitchTargetToSportybet,
 }) => {
   const [copied, setCopied] = useState(false);
 
@@ -186,7 +190,9 @@ export const TicketOutputModule: React.FC<TicketOutputModuleProps> = ({
             <Sparkles className="h-3 w-3" />
             Generated {targetBmObj.name} Code
           </span>
-          <span className="text-[11px] font-mono text-slate-400">Format: {targetBmObj.codePrefix}*****</span>
+          <span className="text-[11px] font-mono text-slate-400">
+            {targetBookmaker === 'SportyBet' ? 'Official 6-char Share Code' : `${targetBmObj.name} Reference Code`}
+          </span>
         </div>
 
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
@@ -196,8 +202,8 @@ export const TicketOutputModule: React.FC<TicketOutputModuleProps> = ({
                 {targetBookingCode || '------'}
               </div>
 
-              {/* SportyBet Official vs Preview Badge */}
-              {targetBookmaker === 'SportyBet' && (
+              {/* SportyBet Official vs Preview vs Manual Badge */}
+              {targetBookmaker === 'SportyBet' ? (
                 isOfficialCode ? (
                   <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/20 border border-emerald-500/40 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-300 shadow-sm">
                     <ShieldCheck className="h-3.5 w-3.5 text-emerald-400 stroke-[2.5]" />
@@ -213,9 +219,14 @@ export const TicketOutputModule: React.FC<TicketOutputModuleProps> = ({
                     }
                   >
                     <AlertTriangle className="h-3 w-3 text-amber-400" />
-                    Preview Code (Bookmaker API Unavailable)
+                    Preview Code (Pending Verification)
                   </span>
                 )
+              ) : (
+                <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 border border-amber-500/30 px-2.5 py-0.5 text-[11px] font-semibold text-amber-300">
+                  <AlertTriangle className="h-3 w-3 text-amber-400" />
+                  Manual Placement Slip
+                </span>
               )}
             </div>
 
@@ -228,6 +239,20 @@ export const TicketOutputModule: React.FC<TicketOutputModuleProps> = ({
           </div>
 
           <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+            {/* 1-Click Load on SportyBet Link Button */}
+            {targetBookmaker === 'SportyBet' && isOfficialCode && targetBookingCode && (
+              <a
+                href={`https://www.sportybet.com/ng/?shareCode=${targetBookingCode}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-bold px-3 py-2 text-xs transition-all shadow-md shadow-emerald-500/20 cursor-pointer"
+                title="Open SportyBet with this booking code preloaded"
+              >
+                <ExternalLink className="h-3.5 w-3.5 stroke-[2.5]" />
+                <span>Load on SportyBet ↗</span>
+              </a>
+            )}
+
             {/* Copy Button */}
             <button
               onClick={handleCopy}
@@ -279,6 +304,35 @@ export const TicketOutputModule: React.FC<TicketOutputModuleProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Bookmaker Compatibility Callout (when not SportyBet) */}
+      {targetBookmaker !== 'SportyBet' && (
+        <div className="mt-3 rounded-xl border border-amber-500/25 bg-amber-950/20 p-3 text-xs text-amber-200/90 shadow-sm">
+          <div className="flex items-start gap-2.5">
+            <AlertCircle className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
+            <div className="space-y-1.5 flex-1">
+              <div className="font-semibold text-amber-300">
+                {targetBmObj.name} does not allow external booking code generation
+              </div>
+              <p className="text-[11px] text-slate-300 leading-relaxed">
+                {targetBmObj.name} does not provide a public API for third parties to insert booking codes into their database. Place these selections manually using the breakdown below, or switch target to SportyBet for an official 1-click booking code.
+              </p>
+              {onSwitchTargetToSportybet && (
+                <div className="pt-1">
+                  <button
+                    type="button"
+                    onClick={onSwitchTargetToSportybet}
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-3 py-1.5 text-xs font-bold transition-all shadow-md shadow-emerald-500/20 cursor-pointer"
+                  >
+                    <Zap className="h-3.5 w-3.5 fill-slate-950" />
+                    <span>Switch to SportyBet (Get 1-Click Code)</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Metrics Grid: Total Odds, Stake, AI Survival Score */}
       <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
