@@ -1,4 +1,7 @@
 import { BookmakerId, BetLeg, MarketType } from './types';
+import { registerSportybetBookingCode } from './sportybetLive';
+
+export { registerSportybetBookingCode };
 
 export interface MarketTranslation {
   marketName: string;
@@ -226,5 +229,30 @@ export function generateTargetBookingCode(bookmakerId: BookmakerId): string {
     default:
       return `CODE-${randomStr(5)}`;
   }
+}
+
+/**
+ * Asynchronously resolves an official or simulated booking code for the target bookmaker.
+ * When targetBookmaker is SportyBet, queries SportyBet's live sportsbook feed and registers an official code.
+ */
+export async function resolveTargetBookingCode(
+  legs: BetLeg[],
+  targetBookmaker: BookmakerId
+): Promise<{
+  bookingCode: string;
+  isOfficialCode: boolean;
+  unmatchedLegs: string[];
+  shareUrl?: string;
+  message?: string;
+}> {
+  if (targetBookmaker === 'SportyBet') {
+    return registerSportybetBookingCode(legs);
+  }
+
+  return {
+    bookingCode: generateTargetBookingCode(targetBookmaker),
+    isOfficialCode: false,
+    unmatchedLegs: [],
+  };
 }
 

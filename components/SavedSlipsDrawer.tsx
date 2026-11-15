@@ -127,8 +127,11 @@ export const SavedSlipsDrawer: React.FC<SavedSlipsDrawerProps> = ({
                       <span className="text-emerald-400">{slip.targetBookmaker}</span>
                     </div>
 
-                    <div className="font-mono font-bold text-slate-200 bg-slate-950 px-2 py-0.5 rounded border border-slate-800 text-xs">
-                      {slip.targetBookingCode}
+                    <div className="flex items-center gap-1.5 font-mono font-bold text-slate-200 bg-slate-950 px-2 py-0.5 rounded border border-slate-800 text-xs">
+                      {slip.isOfficialCode && (
+                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" title="Official SportyBet Code (Verified)" />
+                      )}
+                      <span>{slip.targetBookingCode}</span>
                     </div>
                   </div>
 

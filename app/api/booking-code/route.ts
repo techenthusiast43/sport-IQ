@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { BookmakerId, BetLeg, BookingCodeRequest, BookingCodeResponse, RiskLevel, MarketType } from '@/lib/types';
 import { PRESET_SLIPS, INITIAL_LEGS } from '@/lib/mockData';
-import { mapSlipToTargetBookmaker, generateTargetBookingCode } from '@/lib/bookmakerMapper';
+import { mapSlipToTargetBookmaker, generateTargetBookingCode, resolveTargetBookingCode } from '@/lib/bookmakerMapper';
 
 // Helper to evaluate risk heuristics dynamically
 function evaluateLegRisk(odds: number, marketType: MarketType, selection: string): { riskLevel: RiskLevel; riskReason: string } {
@@ -162,16 +162,20 @@ export async function POST(req: NextRequest) {
   // 1. ACTION: EXPORT / TRANSLATE SLIP TO TARGET BOOKMAKER
   if (action === 'export') {
     const translatedLegs = mapSlipToTargetBookmaker(legs, targetBookmaker);
-    const targetCode = generateTargetBookingCode(targetBookmaker);
+    const targetResult = await resolveTargetBookingCode(translatedLegs, targetBookmaker);
 
     const res: BookingCodeResponse = {
       success: true,
       legs: translatedLegs,
-      targetCode,
-      isLiveFetch: false,
+      targetCode: targetResult.bookingCode,
+      isLiveFetch: targetResult.isOfficialCode,
+      isOfficialCode: targetResult.isOfficialCode,
+      unmatchedLegs: targetResult.unmatchedLegs,
       sourceBookmaker,
       targetBookmaker,
-      message: `Translated ${legs.length} legs for ${targetBookmaker}. Generated destination code ${targetCode}.`,
+      message:
+        targetResult.message ||
+        `Translated ${legs.length} legs for ${targetBookmaker}. Generated destination code ${targetResult.bookingCode}.`,
     };
     return NextResponse.json(res, { status: 200 });
   }
@@ -324,17 +328,21 @@ export async function POST(req: NextRequest) {
 
   // Translate all legs to the target bookmaker's terminology
   const mappedLegs = mapSlipToTargetBookmaker(parsedLegs, targetBookmaker);
-  const targetCode = generateTargetBookingCode(targetBookmaker);
+  const targetResult = await resolveTargetBookingCode(mappedLegs, targetBookmaker);
 
   const response: BookingCodeResponse = {
     success: true,
     legs: mappedLegs,
-    targetCode,
+    targetCode: targetResult.bookingCode,
     isLiveFetch,
+    isOfficialCode: targetResult.isOfficialCode,
+    unmatchedLegs: targetResult.unmatchedLegs,
     sourceBookmaker,
     targetBookmaker,
     message: statusMessage,
-    bookmakerNotice,
+    bookmakerNotice: targetResult.message
+      ? `${bookmakerNotice ? bookmakerNotice + ' ' : ''}${targetResult.message}`
+      : bookmakerNotice,
   };
 
   return NextResponse.json(response, { status: 200 });

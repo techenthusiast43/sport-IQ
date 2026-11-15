@@ -31,6 +31,9 @@ export default function DashboardPage() {
   const [originalLegs, setOriginalLegs] = useState<BetLeg[]>(initialMapped);
   const [stake, setStake] = useState<number>(1000);
   const [targetCode, setTargetCode] = useState<string>('B9-88X9A');
+  const [isOfficialCode, setIsOfficialCode] = useState<boolean>(false);
+  const [unmatchedLegs, setUnmatchedLegs] = useState<string[]>([]);
+  const [isRegisteringCode, setIsRegisteringCode] = useState<boolean>(false);
 
   // Modals & Drawers
   const [isSavedDrawerOpen, setIsSavedDrawerOpen] = useState(false);
@@ -103,6 +106,40 @@ export default function DashboardPage() {
     []
   );
 
+  // Synchronizes destination booking code; queries and registers official code when target is SportyBet
+  const syncTargetCode = async (legsToSync: BetLeg[], target: BookmakerId) => {
+    if (target === 'SportyBet') {
+      setIsRegisteringCode(true);
+      try {
+        const res = await fetch('/api/booking-code', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'export',
+            targetBookmaker: 'SportyBet',
+            sourceBookmaker,
+            legs: legsToSync,
+          }),
+        });
+        if (res.ok) {
+          const data: BookingCodeResponse = await res.json();
+          setTargetCode(data.targetCode);
+          setIsOfficialCode(!!data.isOfficialCode);
+          setUnmatchedLegs(data.unmatchedLegs || []);
+          return;
+        }
+      } catch (err) {
+        console.warn('SportyBet live code sync error:', err);
+      } finally {
+        setIsRegisteringCode(false);
+      }
+    }
+
+    setTargetCode(generateTargetBookingCode(target));
+    setIsOfficialCode(false);
+    setUnmatchedLegs([]);
+  };
+
   // Central function to call POST /api/ai-slip
   const callAiSlipApi = async (promptText: string, actionName?: string, isNewSlip = false) => {
     setIsAiProcessing(true);
@@ -134,7 +171,7 @@ export default function DashboardPage() {
           setOriginalLegs(remapped);
         }
 
-        setTargetCode(generateTargetBookingCode(targetBookmaker));
+        syncTargetCode(remapped, targetBookmaker);
       }
 
       if (typeof data.updatedStake === 'number' && data.updatedStake > 0) {
@@ -164,32 +201,30 @@ export default function DashboardPage() {
   };
 
   // Handler: Target Bookmaker Change (Re-runs canonical translation)
-  const handleTargetChange = (newTarget: BookmakerId) => {
+  const handleTargetChange = async (newTarget: BookmakerId) => {
     setTargetBookmaker(newTarget);
     const remapped = mapSlipToTargetBookmaker(activeLegs, newTarget);
-    const newCode = generateTargetBookingCode(newTarget);
     setActiveLegs(remapped);
-    setTargetCode(newCode);
+    await syncTargetCode(remapped, newTarget);
 
     addMessage(
       'ai',
-      `Target bookmaker changed to ${newTarget}. Mapped all active selections to ${newTarget}'s canonical market standards. New code: ${newCode}.`,
+      `Target bookmaker changed to ${newTarget}. Mapped all active selections to ${newTarget}'s canonical market standards.`,
       isDemoMode,
       'change_target'
     );
   };
 
   // Handler: Swap Bookmakers
-  const handleSwapBookmakers = () => {
+  const handleSwapBookmakers = async () => {
     const prevSource = sourceBookmaker;
     const prevTarget = targetBookmaker;
     setSourceBookmaker(prevTarget);
     setTargetBookmaker(prevSource);
 
     const remapped = mapSlipToTargetBookmaker(activeLegs, prevSource);
-    const newCode = generateTargetBookingCode(prevSource);
     setActiveLegs(remapped);
-    setTargetCode(newCode);
+    await syncTargetCode(remapped, prevSource);
 
     addMessage(
       'ai',
@@ -230,6 +265,8 @@ export default function DashboardPage() {
       setOriginalLegs(loaded); // Set baseline for Before vs After comparison
       setTargetCode(data.targetCode);
       setIsLiveFetch(data.isLiveFetch);
+      setIsOfficialCode(!!data.isOfficialCode);
+      setUnmatchedLegs(data.unmatchedLegs || []);
       if (data.bookmakerNotice) {
         setBookmakerNotice(data.bookmakerNotice);
       }
@@ -251,7 +288,7 @@ export default function DashboardPage() {
   // Handler: Revert to Baseline
   const handleRevertToOriginal = () => {
     setActiveLegs([...originalLegs]);
-    setTargetCode(generateTargetBookingCode(targetBookmaker));
+    syncTargetCode(originalLegs, targetBookmaker);
     addMessage(
       'ai',
       'Reverted slip to baseline state before AI refactoring. Original selections and odds restored.',
@@ -288,6 +325,7 @@ export default function DashboardPage() {
         hour: '2-digit',
         minute: '2-digit',
       }),
+      isOfficialCode,
     };
 
     const updated = [newSavedSlip, ...savedSlips.filter((s) => s.targetBookingCode !== targetCode)];
@@ -310,6 +348,7 @@ export default function DashboardPage() {
     setTargetBookmaker(slip.targetBookmaker);
     setBookingCode(slip.bookingCode);
     setTargetCode(slip.targetBookingCode);
+    setIsOfficialCode(!!slip.isOfficialCode);
     setStake(slip.stake);
     setIsSavedDrawerOpen(false);
 
@@ -383,6 +422,7 @@ export default function DashboardPage() {
     const legToRemove = activeLegs.find((l) => l.id === legId);
     const updated = activeLegs.filter((l) => l.id !== legId);
     setActiveLegs(updated);
+    syncTargetCode(updated, targetBookmaker);
 
     if (legToRemove) {
       addMessage(
@@ -528,6 +568,9 @@ export default function DashboardPage() {
               onSaveSlip={handleSaveSlip}
               onOpenShareModal={() => setIsShareModalOpen(true)}
               isSaved={isCurrentSlipSaved}
+              isOfficialCode={isOfficialCode}
+              unmatchedLegs={unmatchedLegs}
+              isRegisteringLiveCode={isRegisteringCode}
             />
 
             {/* Module 2: AI Slip Editor & Chat Console */}
@@ -567,6 +610,7 @@ export default function DashboardPage() {
         totalOdds={totalOdds}
         stake={stake}
         survivalScore={survivalScore}
+        isOfficialCode={isOfficialCode}
         onClose={() => setIsShareModalOpen(false)}
       />
 

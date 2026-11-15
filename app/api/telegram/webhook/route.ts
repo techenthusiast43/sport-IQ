@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { BookmakerId, BetLeg, MarketType, RiskLevel } from '@/lib/types';
 import { PRESET_SLIPS, INITIAL_LEGS, BOOKMAKERS } from '@/lib/mockData';
-import { mapSlipToTargetBookmaker, generateTargetBookingCode } from '@/lib/bookmakerMapper';
+import { mapSlipToTargetBookmaker, generateTargetBookingCode, resolveTargetBookingCode } from '@/lib/bookmakerMapper';
 import { calculateSurvivalScore, getSurvivalTier } from '@/lib/survivalScore';
 import { getUpcomingFixtures, RealFixture } from '@/lib/sportsData';
 import { GoogleGenAI, Type } from '@google/genai';
@@ -140,7 +140,8 @@ Hey ${userFirstName}! I am your intelligent booking code bridge and risk analyst
 
     // Run through canonical normalization & survival scoring
     const mappedLegs = mapSlipToTargetBookmaker(rawLegs, targetBookmaker);
-    const targetCode = generateTargetBookingCode(targetBookmaker);
+    const targetResult = await resolveTargetBookingCode(mappedLegs, targetBookmaker);
+    const targetCode = targetResult.bookingCode;
     const survivalScore = calculateSurvivalScore(mappedLegs);
     const tier = getSurvivalTier(survivalScore);
     const totalOdds = mappedLegs.reduce((acc, l) => acc * l.odds, 1);
@@ -148,7 +149,7 @@ Hey ${userFirstName}! I am your intelligent booking code bridge and risk analyst
     replyMarkdown = `🎯 *SPORTIQ CODE BRIDGE*
 🔄 *Route:* ${sourceBookmaker} ➔ *${targetBookmaker}*
 🔑 *Input Code:* \`${detectedCode}\`
-✨ *Target Code:* \`${targetCode}\`
+✨ *Target Code:* \`${targetCode}\`${targetResult.isOfficialCode ? ' *(🟢 Verified Official Code)*' : ''}
 
 📊 *Slip Metrics:*
 • Combined Odds: *${totalOdds.toFixed(2)}*
@@ -337,7 +338,8 @@ User Request: "${text}"`,
 
     const targetBookmaker: BookmakerId = 'Bet9ja';
     const mappedLegs = mapSlipToTargetBookmaker(generatedLegs, targetBookmaker);
-    const targetCode = generateTargetBookingCode(targetBookmaker);
+    const targetResult = await resolveTargetBookingCode(mappedLegs, targetBookmaker);
+    const targetCode = targetResult.bookingCode;
     const survivalScore = calculateSurvivalScore(mappedLegs);
     const tier = getSurvivalTier(survivalScore);
     const totalOdds = mappedLegs.reduce((acc, l) => acc * l.odds, 1);
@@ -346,7 +348,7 @@ User Request: "${text}"`,
 
 _${aiSummary}_
 
-✨ *Target Booking Code (${targetBookmaker}):* \`${targetCode}\`
+✨ *Target Booking Code (${targetBookmaker}):* \`${targetCode}\`${targetResult.isOfficialCode ? ' *(🟢 Verified Official Code)*' : ''}
 📈 *Total Odds:* *${totalOdds.toFixed(2)}*
 🛡️ *AI Survival Score:* *${survivalScore}%* (${tier.label})
 

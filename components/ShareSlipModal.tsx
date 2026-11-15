@@ -25,6 +25,7 @@ interface ShareSlipModalProps {
   totalOdds: number;
   stake: number;
   survivalScore: number;
+  isOfficialCode?: boolean;
   onClose: () => void;
 }
 
@@ -36,6 +37,7 @@ export const ShareSlipModal: React.FC<ShareSlipModalProps> = ({
   totalOdds,
   stake,
   survivalScore,
+  isOfficialCode = false,
   onClose,
 }) => {
   const [copiedText, setCopiedText] = useState(false);
@@ -53,7 +55,7 @@ export const ShareSlipModal: React.FC<ShareSlipModalProps> = ({
     const lines = [
       `🚀 *SPORTIQ VERIFIED BET SLIP*`,
       `🎯 Bookmaker: *${targetBm.name}*`,
-      `🔑 Booking Code: *${targetBookingCode || '------'}*`,
+      `🔑 Booking Code: *${targetBookingCode || '------'}*${isOfficialCode && targetBookmaker === 'SportyBet' ? ' *(Official SportyBet Code - Verified)*' : ''}`,
       `📈 Total Odds: *${totalOdds.toFixed(2)}* | AI Survival: *${survivalScore}%* (${tier.label})`,
       `💰 Stake: ₦${stake.toLocaleString()} | Est. Payout: *₦${Math.round(totalPayout).toLocaleString()}*`,
       `─────────────────────────`,
@@ -288,6 +290,11 @@ export const ShareSlipModal: React.FC<ShareSlipModalProps> = ({
             <div className="font-mono text-3xl sm:text-4xl font-extrabold tracking-widest text-emerald-300 select-all">
               {targetBookingCode || '------'}
             </div>
+            {isOfficialCode && targetBookmaker === 'SportyBet' && (
+              <span className="inline-block mt-2 rounded-full bg-emerald-500/20 border border-emerald-500/40 px-2.5 py-0.5 text-[10px] font-semibold text-emerald-300">
+                Official SportyBet Code (Verified)
+              </span>
+            )}
           </div>
 
           {/* Quick Metrics */}

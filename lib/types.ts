@@ -88,6 +88,8 @@ export interface BookingCodeResponse {
   targetBookmaker: BookmakerId;
   message: string;
   bookmakerNotice?: string;
+  isOfficialCode?: boolean;
+  unmatchedLegs?: string[];
 }
 
 export interface SavedSlip {
@@ -102,4 +104,5 @@ export interface SavedSlip {
   stake: number;
   survivalScore: number;
   timestamp: string;
+  isOfficialCode?: boolean;
 }

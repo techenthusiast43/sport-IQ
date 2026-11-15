@@ -16,6 +16,7 @@ import {
   RotateCcw,
   ArrowRight,
   TrendingDown,
+  AlertTriangle,
 } from 'lucide-react';
 import { BookmakerId, BetLeg } from '@/lib/types';
 import { BOOKMAKERS } from '@/lib/mockData';
@@ -37,6 +38,9 @@ interface TicketOutputModuleProps {
   onSaveSlip: () => void;
   onOpenShareModal: () => void;
   isSaved?: boolean;
+  isOfficialCode?: boolean;
+  unmatchedLegs?: string[];
+  isRegisteringLiveCode?: boolean;
 }
 
 export const TicketOutputModule: React.FC<TicketOutputModuleProps> = ({
@@ -55,6 +59,9 @@ export const TicketOutputModule: React.FC<TicketOutputModuleProps> = ({
   onSaveSlip,
   onOpenShareModal,
   isSaved = false,
+  isOfficialCode = false,
+  unmatchedLegs = [],
+  isRegisteringLiveCode = false,
 }) => {
   const [copied, setCopied] = useState(false);
 
@@ -182,9 +189,42 @@ export const TicketOutputModule: React.FC<TicketOutputModuleProps> = ({
           <span className="text-[11px] font-mono text-slate-400">Format: {targetBmObj.codePrefix}*****</span>
         </div>
 
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div className="font-mono text-2xl sm:text-3xl font-extrabold tracking-widest text-emerald-300 select-all">
-            {targetBookingCode || '------'}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="flex flex-col gap-1.5 items-start">
+            <div className="flex flex-wrap items-center gap-2.5">
+              <div className="font-mono text-2xl sm:text-3xl font-extrabold tracking-widest text-emerald-300 select-all">
+                {targetBookingCode || '------'}
+              </div>
+
+              {/* SportyBet Official vs Preview Badge */}
+              {targetBookmaker === 'SportyBet' && (
+                isOfficialCode ? (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/20 border border-emerald-500/40 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-300 shadow-sm">
+                    <ShieldCheck className="h-3.5 w-3.5 text-emerald-400 stroke-[2.5]" />
+                    Official SportyBet Code (Verified)
+                  </span>
+                ) : (
+                  <span
+                    className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 border border-amber-500/30 px-2.5 py-0.5 text-[11px] font-semibold text-amber-300"
+                    title={
+                      unmatchedLegs?.length
+                        ? `Unmatched on SportyBet board: ${unmatchedLegs.join(', ')}`
+                        : 'SportyBet live API registration unavailable'
+                    }
+                  >
+                    <AlertTriangle className="h-3 w-3 text-amber-400" />
+                    Preview Code (Bookmaker API Unavailable)
+                  </span>
+                )
+              )}
+            </div>
+
+            {/* Unmatched fixtures note if fallback was engaged */}
+            {targetBookmaker === 'SportyBet' && !isOfficialCode && unmatchedLegs && unmatchedLegs.length > 0 && (
+              <p className="text-[10px] text-amber-400/80">
+                Note: {unmatchedLegs.length} leg(s) not currently listed on SportyBet ({unmatchedLegs.slice(0, 2).join(', ')}{unmatchedLegs.length > 2 ? '...' : ''}).
+              </p>
+            )}
           </div>
 
           <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
